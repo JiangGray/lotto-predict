@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <title>大樂透預測網站</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('cat-background.jpg') no-repeat center center fixed;
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: url("cat-background.jpg") no-repeat center center fixed;
       background-size: cover;
       display: flex;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* 左側按鈕區 */
+    /* 左側選單 */
     .sidebar {
-      width: 200px;
+      width: 220px;
       background: rgba(0, 0, 0, 0.7);
       color: white;
       padding: 20px;
@@ -26,115 +26,144 @@
       gap: 15px;
     }
 
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+      border-bottom: 1px solid #666;
+      padding-bottom: 10px;
+    }
+
     .sidebar button {
       padding: 10px;
-      font-size: 16px;
       border: none;
       border-radius: 8px;
-      cursor: pointer;
-      background: #ff9800;
+      background: linear-gradient(135deg, #ff7e5f, #feb47b);
       color: white;
-      transition: background 0.3s;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
     }
 
     .sidebar button:hover {
-      background: #e68900;
+      background: linear-gradient(135deg, #feb47b, #ff7e5f);
+      transform: scale(1.05);
     }
 
-    /* 右側內容區 */
+    /* 右側內容 */
     .content {
       flex: 1;
-      background: rgba(255, 255, 255, 0.85);
       padding: 20px;
-      box-sizing: border-box;
       overflow-y: auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
     }
 
-    h2 {
-      margin-top: 0;
-    }
-
-    .lotto-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .lotto-table th, .lotto-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
+    h1 {
       text-align: center;
+      margin-bottom: 20px;
+      color: #333;
     }
 
-    .lotto-table th {
-      background: #f57c00;
-      color: white;
-      position: sticky;
-      top: 0;
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 15px;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .issue {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .numbers {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ball {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #e0e0e0, #f5f5f5);
+      box-shadow: inset -2px -2px 5px #cfcfcf, inset 2px 2px 5px #ffffff;
+      font-weight: bold;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <!-- 左側 -->
+  <!-- 左側選單 -->
   <div class="sidebar">
-    <button onclick="predict()">隨機預測</button>
-    <button onclick="loadHistory()">顯示歷史資料</button>
+    <h2>大樂透功能</h2>
+    <button onclick="showHistory()">顯示歷史資料</button>
+    <button onclick="predict()">預測號碼</button>
   </div>
 
-  <!-- 右側 -->
-  <div class="content" id="content">
-    <h2>歡迎來到大樂透預測網站</h2>
-    <p>請選擇左邊的功能。</p>
+  <!-- 右側內容 -->
+  <div class="content">
+    <h1>大樂透預測網站</h1>
+    <div id="result">請選擇左側功能</div>
   </div>
 
   <script>
-    // 隨機預測 6 個號碼
-    function predict() {
-      let numbers = [];
-      while (numbers.length < 6) {
-        let num = Math.floor(Math.random() * 49) + 1;
-        if (!numbers.includes(num)) numbers.push(num);
+    let lottoData = [];
+
+    // 從 lottoData.json 載入資料
+    async function loadData() {
+      try {
+        const response = await fetch("lottoData.json");
+        if (!response.ok) throw new Error("讀取失敗");
+        lottoData = await response.json();
+      } catch (err) {
+        document.getElementById("result").innerHTML = `<p style="color:red;">載入資料失敗: ${err.message}</p>`;
       }
-      numbers.sort((a, b) => a - b);
-
-      document.getElementById("content").innerHTML = `
-        <h2>隨機預測號碼</h2>
-        <p>${numbers.join(", ")}</p>
-      `;
     }
 
-    // 載入歷史資料
-    function loadHistory() {
-      fetch("lottoData.json")
-        .then(response => {
-          if (!response.ok) throw new Error("HTTP 錯誤: " + response.status);
-          return response.json();
-        })
-        .then(data => {
-          let html = `
-            <h2>最近 ${data.length} 期歷史開獎號碼</h2>
-            <table class="lotto-table">
-              <tr><th>期別</th><th>日期</th><th>開獎號碼</th></tr>
-          `;
-          data.forEach(item => {
-            html += `
-              <tr>
-                <td>${item.issue}</td>
-                <td>${item.date}</td>
-                <td>${item.numbers.join(", ")}</td>
-              </tr>
-            `;
-          });
-          html += `</table>`;
-          document.getElementById("content").innerHTML = html;
-        })
-        .catch(error => {
-          document.getElementById("content").innerHTML = `
-            <h2>讀取失敗</h2>
-            <p style="color:red;">${error}</p>
-          `;
-          console.error("載入失敗:", error);
-        });
+    function showHistory() {
+      const container = document.getElementById("result");
+      container.innerHTML = "<h2>近50期開獎號碼</h2>";
+
+      lottoData.forEach(draw => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <div class="issue">第 ${draw.issue} 期 (${draw.date})</div>
+          <div class="numbers">
+            ${draw.numbers.map(num => `<div class="ball">${num}</div>`).join("")}
+          </div>
+        `;
+        container.appendChild(card);
+      });
     }
+
+    function predict() {
+      const container = document.getElementById("result");
+      let nums = [];
+      while(nums.length < 6){
+        let n = Math.floor(Math.random() * 49) + 1;
+        if(!nums.includes(n)) nums.push(n);
+      }
+      nums.sort((a,b)=>a-b);
+
+      container.innerHTML = "<h2>預測號碼</h2>" +
+        `<div class="numbers">${nums.map(num => `<div class="ball">${num}</div>`).join("")}</div>`;
+    }
+
+    // 預先載入 JSON
+    loadData();
   </script>
 </body>
 </html>
