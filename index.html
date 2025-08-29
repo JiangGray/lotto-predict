@@ -1,203 +1,115 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>大樂透預測網站 - 左右分割</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: url('https://images.unsplash.com/photo-1601758173923-29f62bb8c10d?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
-    background-size: cover;
-}
-
-.container {
-    display: flex;
-    height: 100vh;
-    backdrop-filter: blur(5px);
-}
-
-/* 左側按鈕區 */
-.sidebar {
-    width: 250px;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-/* 右側內容區 */
-.content {
-    flex: 1;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    background: rgba(255,255,255,0.7);
-}
-
-/* 按鈕樣式 */
-button {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 10px;
-    background: #1f3c88;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-}
-button:hover { background: #3757d6; }
-
-/* 輸入框樣式 */
-input, select {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-    outline: none;
-}
-input:focus, select:focus { border-color: #1f3c88; }
-
-/* 號碼球 */
-.number {
-    display: inline-block;
-    width: 45px;
-    height: 45px;
-    line-height: 45px;
-    border-radius: 50%;
-    margin: 5px;
-    font-size: 18px;
-    font-weight: bold;
-    color: white;
-    background: radial-gradient(circle at 30% 30%,#ffce00,#e6b800);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-}
-.number.special {
-    background: radial-gradient(circle at 30% 30%,#ff7a7a,#e05555);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-    <div class="sidebar">
-        <h2>控制面板</h2>
-        <label>熱門閾值: <input type="number" id="hotThreshold" value="5"></label>
-        <label>冷門閾值: <input type="number" id="coldThreshold" value="2"></label>
-        <button onclick="drawChart()">更新圖表</button>
-
-        <label>最近期數: <input type="number" id="recentCount" value="50"></label>
-        <button onclick="analyzeFrequency()">套用範圍分析</button>
-
-        <label>生成組數: <input type="number" id="groupCount" value="5"></label>
-        <select id="mode">
-            <option value="random">隨機</option>
-            <option value="hot">偏熱門號</option>
-            <option value="cold">偏冷門號</option>
-        </select>
-        <button onclick="generateNumbers()">生成號碼</button>
-    </div>
-
-    <div class="content">
-        <h1>大樂透預測結果</h1>
-        <canvas id="chart" height="200"></canvas>
-        <div id="results"></div>
-    </div>
-</div>
-
-<script>
-let lottoNumbers = [];
-let freq = [];
-
-window.onload = function() {
-    fetch('lottoData.json')
-        .then(response => response.json())
-        .then(data => {
-            lottoNumbers = data.map(item => item.numbers);
-            analyzeFrequency();
-        })
-        .catch(err => console.error('讀取 JSON 失敗:', err));
-}
-
-function analyzeFrequency() {
-    const recentCount = parseInt(document.getElementById('recentCount').value) || lottoNumbers.length;
-    const numbersToAnalyze = lottoNumbers.slice(0, recentCount);
-    freq = Array(49).fill(0);
-    numbersToAnalyze.forEach(draw => {
-        draw.forEach(n => { if(n>=1 && n<=49) freq[n-1]++; });
-    });
-    drawChart();
-}
-
-function drawChart() {
-    const hotThreshold = parseInt(document.getElementById('hotThreshold').value) || 5;
-    const coldThreshold = parseInt(document.getElementById('coldThreshold').value) || 2;
-    const ctx = document.getElementById('chart').getContext('2d');
-    if(window.myChart) window.myChart.destroy();
-    window.myChart = new Chart(ctx, {
-        type:'bar',
-        data:{
-            labels:Array.from({length:49},(_,i)=>i+1),
-            datasets:[{
-                label:'出現次數',
-                data: freq,
-                backgroundColor: freq.map(f=> f>=hotThreshold?'orange':(f<=coldThreshold?'skyblue':'lightgray'))
-            }]
-        },
-        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
-    });
-}
-
-function generateNumbers(){
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML='';
-    const count = parseInt(document.getElementById('groupCount').value)||5;
-    const mode = document.getElementById('mode').value;
-
-    for(let g=0; g<count; g++){
-        let mainNumbers=[], available=[];
-        for(let i=1;i<=49;i++) available.push(i);
-
-        for(let i=0;i<6;i++){
-            let num;
-            if(mode==='hot'){
-                const sorted=available.sort((a,b)=>freq[b-1]-freq[a-1]);
-                num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
-            } else if(mode==='cold'){
-                const sorted=available.sort((a,b)=>freq[a-1]-freq[b-1]);
-                num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
-            } else {
-                num=available[Math.floor(Math.random()*available.length)];
-            }
-            mainNumbers.push(num);
-            available=available.filter(n=>n!==num);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大樂透預測網站</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url('cat-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden; /* 🚫 禁止出現捲軸 */
         }
 
-        let special = available[Math.floor(Math.random()*available.length)];
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
 
-        const groupDiv=document.createElement('div');
-        mainNumbers.sort((a,b)=>a-b).forEach(n=>{
-            const nDiv=document.createElement('div');
-            nDiv.className='number';
-            nDiv.textContent=n;
-            groupDiv.appendChild(nDiv);
-        });
-        const sDiv=document.createElement('div');
-        sDiv.className='number special';
-        sDiv.textContent=special;
-        groupDiv.appendChild(sDiv);
-        resultsDiv.appendChild(groupDiv);
-    }
-}
-</script>
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
 
+        .content {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto; /* ✅ 僅允許右側垂直滾動 */
+        }
+
+        button {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .result {
+            font-size: 18px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左側功能區 -->
+        <div class="sidebar">
+            <h2>功能選單</h2>
+            <button onclick="predictLotto()">預測號碼</button>
+            <button onclick="showHistory()">顯示歷史資料</button>
+        </div>
+
+        <!-- 右側顯示區 -->
+        <div class="content">
+            <h2>結果顯示</h2>
+            <div id="output" class="result">請選擇功能</div>
+        </div>
+    </div>
+
+    <script>
+        async function predictLotto() {
+            let numbers = [];
+            while (numbers.length < 6) {
+                let n = Math.floor(Math.random() * 49) + 1;
+                if (!numbers.includes(n)) numbers.push(n);
+            }
+            numbers.sort((a, b) => a - b);
+            document.getElementById("output").innerHTML = 
+                "<b>預測號碼：</b> " + numbers.join(", ");
+        }
+
+        async function showHistory() {
+            try {
+                const response = await fetch("lottoData.json"); // 📂 請確認 JSON 檔有放在同一資料夾
+                const data = await response.json();
+
+                let html = "<h3>近 50 期歷史開獎號碼</h3>";
+                html += "<ul>";
+                data.forEach(d => {
+                    html += `<li><b>${d.date}</b> ➝ ${d.numbers.join(", ")}</li>`;
+                });
+                html += "</ul>";
+
+                document.getElementById("output").innerHTML = html;
+            } catch (e) {
+                document.getElementById("output").innerHTML = "⚠ 無法載入歷史資料";
+                console.error(e);
+            }
+        }
+    </script>
 </body>
 </html>
