@@ -2,48 +2,23 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>大樂透進階預測網站（內建資料版）</title>
+<title>大樂透進階預測網站（JSON 版）</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #f0f4f7, #d9e2ec);
-  text-align: center;
-  padding: 20px;
-}
-h1 { margin-bottom: 20px; color: #1f3c88; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-.card {
-  background: #ffffff;
-  border-radius: 15px;
-  padding: 20px;
-  margin: 15px auto;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  max-width: 800px;
-}
-button {
-  border: none; border-radius: 10px; padding: 10px 15px;
-  background: #1f3c88; color: white; font-weight: bold; cursor: pointer; transition: 0.3s;
-}
-button:hover { background: #3757d6; }
-input, select {
-  padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; outline: none; transition: 0.2s;
-}
-input:focus, select:focus { border-color: #1f3c88; }
-.number {
-  display: inline-block; width: 45px; height: 45px; line-height: 45px;
-  border-radius: 50%; margin: 5px; font-size: 18px; font-weight: bold;
-  color: white; background: radial-gradient(circle at 30% 30%, #ffce00, #e6b800);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.3); transition: 0.2s;
-}
-.number.special {
-  background: radial-gradient(circle at 30% 30%, #ff7a7a, #e05555);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-}
-.stats { margin-top: 30px; width: 90%; max-width: 900px; margin-left: auto; margin-right: auto; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to bottom,#f0f4f7,#d9e2ec); text-align:center; padding:20px; }
+h1 { margin-bottom:20px; color:#1f3c88; text-shadow:1px 1px 2px rgba(0,0,0,0.2); }
+.card { background:#fff; border-radius:15px; padding:20px; margin:15px auto; box-shadow:0 5px 15px rgba(0,0,0,0.1); max-width:800px; }
+button { border:none; border-radius:10px; padding:10px 15px; background:#1f3c88; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
+button:hover { background:#3757d6; }
+input, select { padding:8px 10px; border-radius:8px; border:1px solid #ccc; outline:none; transition:0.2s; }
+input:focus, select:focus { border-color:#1f3c88; }
+.number { display:inline-block; width:45px; height:45px; line-height:45px; border-radius:50%; margin:5px; font-size:18px; font-weight:bold; color:white; background:radial-gradient(circle at 30% 30%,#ffce00,#e6b800); box-shadow:0 3px 8px rgba(0,0,0,0.3); transition:0.2s; }
+.number.special { background:radial-gradient(circle at 30% 30%,#ff7a7a,#e05555); box-shadow:0 3px 8px rgba(0,0,0,0.4); }
+.stats { margin-top:30px; width:90%; max-width:900px; margin-left:auto; margin-right:auto; }
 </style>
 </head>
 <body>
-<h1>大樂透進階預測網站（內建資料版）</h1>
+<h1>大樂透進階預測網站（JSON 版）</h1>
 
 <div class="card">
   <h2>篩選與設定</h2>
@@ -79,108 +54,56 @@ input:focus, select:focus { border-color: #1f3c88; }
 </div>
 
 <script>
-// ----------------- 內建完整歷史號碼資料 -----------------
-let lottoNumbers = [
-  [1,5,12,23,34,45],
-  [3,8,15,22,30,42],
-  [2,6,14,19,27,33],
-  [7,9,18,25,31,44],
-  [4,11,16,21,36,47],
-  [5,10,13,20,28,41],
-  [8,12,17,24,35,46],
-  [1,6,14,23,32,43],
-  [2,7,15,21,30,40],
-  [3,9,18,27,34,48],
-  [4,10,17,22,31,45],
-  [5,11,16,23,32,41],
-  [6,12,19,26,35,44],
-  [7,13,20,28,37,46],
-  [8,14,21,29,38,47],
-  [9,15,22,30,39,48],
-  [10,16,23,31,40,49],
-  [11,17,24,32,41,48],
-  [12,18,25,33,42,47],
-  [13,19,26,34,43,49],
-  [14,20,27,35,44,48],
-  [15,21,28,36,45,47],
-  [16,22,29,37,46,49],
-  [17,23,30,38,47,48],
-  [18,24,31,39,44,49],
-  [19,25,32,40,45,47],
-  [20,26,33,41,46,48],
-  [21,27,34,42,47,49],
-  [22,28,35,43,44,48],
-  [23,29,36,44,45,49],
-  [24,30,37,45,46,48],
-  [25,31,38,46,47,49],
-  [26,32,39,47,48,49],
-  [27,33,40,44,45,48],
-  [28,34,41,45,46,49],
-  [29,35,42,46,47,48],
-  [30,36,43,47,48,49],
-  [31,37,44,48,49,45],
-  [32,38,45,49,48,47],
-  [33,39,46,48,49,44],
-  [34,40,47,49,48,45],
-  [35,41,48,49,47,44],
-  [36,42,49,48,47,45],
-  [37,43,48,49,46,44],
-  [38,44,49,48,47,45],
-  [39,45,48,49,46,44],
-  [40,46,49,48,47,45],
-  [41,47,49,48,46,44],
-  [42,48,49,47,45,44],
-  [43,49,48,46,45,44],
-  [44,49,48,47,46,45],
-  [45,49,48,47,46,44],
-  [46,49,48,47,45,44],
-  [47,49,48,46,45,44],
-  [48,49,47,46,45,44],
-  [49,48,47,46,45,44]
-];
+let lottoNumbers = [];
+let freq = [];
 
-let freq = Array(49).fill(0);
-window.onload = function() { analyzeFrequency(); }
+window.onload = function() {
+  fetch('lottoData.json')
+    .then(response => response.json())
+    .then(data => {
+      // 將每期號碼取出
+      lottoNumbers = data.map(item => item.numbers);
+      analyzeFrequency();
+    })
+    .catch(err => console.error('讀取 JSON 失敗:', err));
+}
 
-// ----------------- 計算冷熱號 -----------------
 function analyzeFrequency() {
   const recentCount = parseInt(document.getElementById('recentCount').value) || lottoNumbers.length;
   const numbersToAnalyze = lottoNumbers.slice(0, recentCount);
   freq = Array(49).fill(0);
-  numbersToAnalyze.forEach(draw=>{
-    draw.forEach(n=>{ if(n>=1 && n<=49) freq[n-1]++; });
+  numbersToAnalyze.forEach(draw => {
+    draw.forEach(n => { if(n>=1 && n<=49) freq[n-1]++; });
   });
   drawChart();
 }
 
-// ----------------- 畫冷熱號圖表 -----------------
 function drawChart() {
   const hotThreshold = parseInt(document.getElementById('hotThreshold').value) || 5;
   const coldThreshold = parseInt(document.getElementById('coldThreshold').value) || 2;
   const ctx = document.getElementById('chart').getContext('2d');
   if(window.myChart) window.myChart.destroy();
   window.myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: Array.from({length:49},(_,i)=>i+1),
+    type:'bar',
+    data:{
+      labels:Array.from({length:49},(_,i)=>i+1),
       datasets:[{
         label:'出現次數',
         data: freq,
         backgroundColor: freq.map(f=> f>=hotThreshold?'orange':(f<=coldThreshold?'skyblue':'lightgray'))
       }]
     },
-    options: { responsive:true, scales:{ y:{beginAtZero:true} } }
+    options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
   });
 }
 
-// ----------------- 生成號碼 -----------------
 function generateNumbers(){
   const resultsDiv = document.getElementById('results');
   resultsDiv.innerHTML='';
   const count = parseInt(document.getElementById('groupCount').value)||5;
   const mode = document.getElementById('mode').value;
 
-  for(let g=0;g<count;g++){
+  for(let g=0; g<count; g++){
     let mainNumbers=[], available=[];
     for(let i=1;i<=49;i++) available.push(i);
 
