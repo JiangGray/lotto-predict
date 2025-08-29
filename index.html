@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>大樂透進階預測網站</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial, sans-serif; text-align:center; padding:20px; background:#f9f9f9; }
+h1 { margin-bottom:15px; }
+button,input,select { margin:5px; padding:5px; }
+#results { margin-top:20px; }
+.number { display:inline-block; width:40px; height:40px; line-height:40px; border-radius:50%; background:#ffce00; margin:3px; font-size:18px; }
+.special { background:#ff7a7a; }
+.stats { margin-top:20px; text-align:center; display:block; width:80%; margin-left:auto; margin-right:auto; }
+</style>
+</head>
+<body>
+<h1>大樂透進階預測網站</h1>
+
+<p>網站會自動抓取最新歷史開獎資料，冷熱號統計圖自動更新。</p>
+
+<div>
+  <label>熱門閾值: <input type="number" id="hotThreshold" value="5" min="1" max="50"></label>
+  <label>冷門閾值: <input type="number" id="coldThreshold" value="2" min="0" max="50"></label>
+  <button onclick="drawChart()">更新圖表</button>
+</div>
+
+<div>
+  <label>最近期數: <input type="number" id="recentCount" value="50" min="1" max="1000"></label>
+  <button onclick="analyzeFrequency()">套用範圍分析</button>
+</div>
+
+<input type="number" id="groupCount" value="5" min="1" max="20"> 組建議號碼
+<select id="mode">
+  <option value="random">隨機</option>
+  <option value="hot">偏熱門號</option>
+  <option value="cold">偏冷門號</option>
+</select>
+<button onclick="generateNumbers()">生成號碼</button>
+
+<canvas id="chart" class="stats" height="150"></canvas>
+<div id="results"></div>
+
+<script>
+let freq = Array(49).fill(0);
+let lottoNumbers = [];
+
+// 網站載入時自動抓取資料
+window.onload = function() {
+  checkAndFetchData();
+}
+
+// 檢查 LocalStorage 是否有今天資料
+function checkAndFetchData() {
+  const today = new Date().toISOString().split('T')[0];
+  const stored = JSON.parse(localStorage.getItem('lottoData') || '{}');
+  if(stored.date === today && stored.numbers){
+    lottoNumbers = stored.numbers;
+    analyzeFrequency();
+  } else {
+    fetchData(today);
+  }
+}
+
+// 抓取官方資料
+async function fetchData(today) {
+  try {
+    const response = await fetch('https://www.taiwanlottery.com.tw/lotto/Lotto649/history.aspx');
+    const text = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text,'text/html');
+    const rows = doc.querySelectorAll('.contents_box02 tr');
+    lottoNumbers = [];
+    rows.forEach(row=>{
+      const cells = row.querySelectorAll('td');
+      if(cells.length>1){
+        const nums = cells[1].textContent.trim().split('、').map(n=>parseInt(n));
+        if(nums.length>0) lottoNumbers.push(nums);
+      }
+    });
+    localStorage.setItem('lottoData', JSON.stringify({date: today, numbers: lottoNumbers}));
+    analyzeFrequency();
+  } catch(err) {
+    alert('抓取資料失敗，請手動輸入歷史號碼');
+    console.error(err);
+  }
+}
+
+// 統計冷熱號（可篩選最近 N 期）
+function analyzeFrequency() {
+  const recentCount = parseInt(document.getElementById('recentCount').value) || lottoNumbers.length;
+  const numbersToAnalyze = lottoNumbers.slice(0, recentCount);
+  freq = Array(49).fill(0);
+  numbersToAnalyze.forEach(draw=>{
+    draw.forEach(n=>{
+      if(n>=1 && n<=49) freq[n-1]++;
+    });
+  });
+  drawChart();
+}
+
+// 繪製冷熱號柱狀圖
+function drawChart() {
+  const hotThreshold = parseInt(document.getElementById('hotThreshold').value) || 5;
+  const coldThreshold = parseInt(document.getElementById('coldThreshold').value) || 2;
+  const ctx = document.getElementById('chart').getContext('2d');
+  
+  if(window.myChart) window.myChart.destroy();
+  window.myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({length:49},(_,i)=>i+1),
+      datasets:[{
+        label:'出現次數',
+        data: freq,
+        backgroundColor: freq.map(f=> f>=hotThreshold?'orange':(f<=coldThreshold?'skyblue':'lightgray'))
+      }]
+    },
+    options: {
+      responsive:true,
+      scales:{
+        y:{beginAtZero:true}
+      }
+    }
+  });
+}
+
+// 生成建議號碼
+function generateNumbers(){
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML='';
+  const count = parseInt(document.getElementById('groupCount').value)||5;
+  const mode = document.getElementById('mode').value;
+
+  for(let g=0;g<count;g++){
+    let mainNumbers=[], available=[];
+    for(let i=1;i<=49;i++) available.push(i);
+
+    for(let i=0;i<6;i++){
+      let num;
+      if(mode==='hot'){
+        const sorted=available.sort((a,b)=>freq[b-1]-freq[a-1]);
+        num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
+      } else if(mode==='cold'){
+        const sorted=available.sort((a,b)=>freq[a-1]-freq[b-1]);
+        num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
+      } else {
+        num=available[Math.floor(Math.random()*available.length)];
+      }
+      mainNumbers.push(num);
+      available=available.filter(n=>n!==num);
+    }
+
+    let special = available[Math.floor(Math.random()*available.length)];
+
+    const groupDiv=document.createElement('div');
+    mainNumbers.sort((a,b)=>a-b).forEach(n=>{
+      const nDiv=document.createElement('div');
+      nDiv.className='number';
+      nDiv.textContent=n;
+      groupDiv.appendChild(nDiv);
+    });
+    const sDiv=document.createElement('div');
+    sDiv.className='number special';
+    sDiv.textContent=special;
+    groupDiv.appendChild(sDiv);
+    resultsDiv.appendChild(groupDiv);
+  }
+}
+</script>
+</body>
+</html>
