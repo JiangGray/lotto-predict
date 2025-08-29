@@ -2,55 +2,115 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>大樂透進階預測網站（JSON 版）</title>
+<title>大樂透預測網站 - 左右分割</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to bottom,#f0f4f7,#d9e2ec); text-align:center; padding:20px; }
-h1 { margin-bottom:20px; color:#1f3c88; text-shadow:1px 1px 2px rgba(0,0,0,0.2); }
-.card { background:#fff; border-radius:15px; padding:20px; margin:15px auto; box-shadow:0 5px 15px rgba(0,0,0,0.1); max-width:800px; }
-button { border:none; border-radius:10px; padding:10px 15px; background:#1f3c88; color:white; font-weight:bold; cursor:pointer; transition:0.3s; }
-button:hover { background:#3757d6; }
-input, select { padding:8px 10px; border-radius:8px; border:1px solid #ccc; outline:none; transition:0.2s; }
-input:focus, select:focus { border-color:#1f3c88; }
-.number { display:inline-block; width:45px; height:45px; line-height:45px; border-radius:50%; margin:5px; font-size:18px; font-weight:bold; color:white; background:radial-gradient(circle at 30% 30%,#ffce00,#e6b800); box-shadow:0 3px 8px rgba(0,0,0,0.3); transition:0.2s; }
-.number.special { background:radial-gradient(circle at 30% 30%,#ff7a7a,#e05555); box-shadow:0 3px 8px rgba(0,0,0,0.4); }
-.stats { margin-top:30px; width:90%; max-width:900px; margin-left:auto; margin-right:auto; }
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('https://images.unsplash.com/photo-1601758173923-29f62bb8c10d?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size: cover;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+    backdrop-filter: blur(5px);
+}
+
+/* 左側按鈕區 */
+.sidebar {
+    width: 250px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* 右側內容區 */
+.content {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.7);
+}
+
+/* 按鈕樣式 */
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 10px;
+    background: #1f3c88;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button:hover { background: #3757d6; }
+
+/* 輸入框樣式 */
+input, select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    outline: none;
+}
+input:focus, select:focus { border-color: #1f3c88; }
+
+/* 號碼球 */
+.number {
+    display: inline-block;
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    border-radius: 50%;
+    margin: 5px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: radial-gradient(circle at 30% 30%,#ffce00,#e6b800);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
+.number.special {
+    background: radial-gradient(circle at 30% 30%,#ff7a7a,#e05555);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
 </style>
 </head>
 <body>
-<h1>大樂透進階預測網站（JSON 版）</h1>
 
-<div class="card">
-  <h2>篩選與設定</h2>
-  <div>
-    <label>熱門閾值: <input type="number" id="hotThreshold" value="5" min="1" max="50"></label>
-    <label>冷門閾值: <input type="number" id="coldThreshold" value="2" min="0" max="50"></label>
-    <button onclick="drawChart()">更新圖表</button>
-  </div>
-  <div>
-    <label>最近期數: <input type="number" id="recentCount" value="50" min="1" max="1000"></label>
-    <button onclick="analyzeFrequency()">套用範圍分析</button>
-  </div>
-</div>
+<div class="container">
+    <div class="sidebar">
+        <h2>控制面板</h2>
+        <label>熱門閾值: <input type="number" id="hotThreshold" value="5"></label>
+        <label>冷門閾值: <input type="number" id="coldThreshold" value="2"></label>
+        <button onclick="drawChart()">更新圖表</button>
 
-<div class="card">
-  <h2>生成號碼</h2>
-  <input type="number" id="groupCount" value="5" min="1" max="20"> 組建議號碼
-  <select id="mode">
-    <option value="random">隨機</option>
-    <option value="hot">偏熱門號</option>
-    <option value="cold">偏冷門號</option>
-  </select>
-  <button onclick="generateNumbers()">生成號碼</button>
-</div>
+        <label>最近期數: <input type="number" id="recentCount" value="50"></label>
+        <button onclick="analyzeFrequency()">套用範圍分析</button>
 
-<div class="card">
-  <h2>冷熱號統計</h2>
-  <canvas id="chart" class="stats" height="200"></canvas>
-</div>
+        <label>生成組數: <input type="number" id="groupCount" value="5"></label>
+        <select id="mode">
+            <option value="random">隨機</option>
+            <option value="hot">偏熱門號</option>
+            <option value="cold">偏冷門號</option>
+        </select>
+        <button onclick="generateNumbers()">生成號碼</button>
+    </div>
 
-<div class="card" id="results">
-  <h2>號碼結果</h2>
+    <div class="content">
+        <h1>大樂透預測結果</h1>
+        <canvas id="chart" height="200"></canvas>
+        <div id="results"></div>
+    </div>
 </div>
 
 <script>
@@ -58,86 +118,86 @@ let lottoNumbers = [];
 let freq = [];
 
 window.onload = function() {
-  fetch('lottoData.json')
-    .then(response => response.json())
-    .then(data => {
-      // 將每期號碼取出
-      lottoNumbers = data.map(item => item.numbers);
-      analyzeFrequency();
-    })
-    .catch(err => console.error('讀取 JSON 失敗:', err));
+    fetch('lottoData.json')
+        .then(response => response.json())
+        .then(data => {
+            lottoNumbers = data.map(item => item.numbers);
+            analyzeFrequency();
+        })
+        .catch(err => console.error('讀取 JSON 失敗:', err));
 }
 
 function analyzeFrequency() {
-  const recentCount = parseInt(document.getElementById('recentCount').value) || lottoNumbers.length;
-  const numbersToAnalyze = lottoNumbers.slice(0, recentCount);
-  freq = Array(49).fill(0);
-  numbersToAnalyze.forEach(draw => {
-    draw.forEach(n => { if(n>=1 && n<=49) freq[n-1]++; });
-  });
-  drawChart();
+    const recentCount = parseInt(document.getElementById('recentCount').value) || lottoNumbers.length;
+    const numbersToAnalyze = lottoNumbers.slice(0, recentCount);
+    freq = Array(49).fill(0);
+    numbersToAnalyze.forEach(draw => {
+        draw.forEach(n => { if(n>=1 && n<=49) freq[n-1]++; });
+    });
+    drawChart();
 }
 
 function drawChart() {
-  const hotThreshold = parseInt(document.getElementById('hotThreshold').value) || 5;
-  const coldThreshold = parseInt(document.getElementById('coldThreshold').value) || 2;
-  const ctx = document.getElementById('chart').getContext('2d');
-  if(window.myChart) window.myChart.destroy();
-  window.myChart = new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels:Array.from({length:49},(_,i)=>i+1),
-      datasets:[{
-        label:'出現次數',
-        data: freq,
-        backgroundColor: freq.map(f=> f>=hotThreshold?'orange':(f<=coldThreshold?'skyblue':'lightgray'))
-      }]
-    },
-    options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
-  });
+    const hotThreshold = parseInt(document.getElementById('hotThreshold').value) || 5;
+    const coldThreshold = parseInt(document.getElementById('coldThreshold').value) || 2;
+    const ctx = document.getElementById('chart').getContext('2d');
+    if(window.myChart) window.myChart.destroy();
+    window.myChart = new Chart(ctx, {
+        type:'bar',
+        data:{
+            labels:Array.from({length:49},(_,i)=>i+1),
+            datasets:[{
+                label:'出現次數',
+                data: freq,
+                backgroundColor: freq.map(f=> f>=hotThreshold?'orange':(f<=coldThreshold?'skyblue':'lightgray'))
+            }]
+        },
+        options:{ responsive:true, scales:{ y:{beginAtZero:true} } }
+    });
 }
 
 function generateNumbers(){
-  const resultsDiv = document.getElementById('results');
-  resultsDiv.innerHTML='';
-  const count = parseInt(document.getElementById('groupCount').value)||5;
-  const mode = document.getElementById('mode').value;
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML='';
+    const count = parseInt(document.getElementById('groupCount').value)||5;
+    const mode = document.getElementById('mode').value;
 
-  for(let g=0; g<count; g++){
-    let mainNumbers=[], available=[];
-    for(let i=1;i<=49;i++) available.push(i);
+    for(let g=0; g<count; g++){
+        let mainNumbers=[], available=[];
+        for(let i=1;i<=49;i++) available.push(i);
 
-    for(let i=0;i<6;i++){
-      let num;
-      if(mode==='hot'){
-        const sorted=available.sort((a,b)=>freq[b-1]-freq[a-1]);
-        num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
-      } else if(mode==='cold'){
-        const sorted=available.sort((a,b)=>freq[a-1]-freq[b-1]);
-        num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
-      } else {
-        num=available[Math.floor(Math.random()*available.length)];
-      }
-      mainNumbers.push(num);
-      available=available.filter(n=>n!==num);
+        for(let i=0;i<6;i++){
+            let num;
+            if(mode==='hot'){
+                const sorted=available.sort((a,b)=>freq[b-1]-freq[a-1]);
+                num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
+            } else if(mode==='cold'){
+                const sorted=available.sort((a,b)=>freq[a-1]-freq[b-1]);
+                num=sorted[Math.floor(Math.random()*Math.min(10,sorted.length))];
+            } else {
+                num=available[Math.floor(Math.random()*available.length)];
+            }
+            mainNumbers.push(num);
+            available=available.filter(n=>n!==num);
+        }
+
+        let special = available[Math.floor(Math.random()*available.length)];
+
+        const groupDiv=document.createElement('div');
+        mainNumbers.sort((a,b)=>a-b).forEach(n=>{
+            const nDiv=document.createElement('div');
+            nDiv.className='number';
+            nDiv.textContent=n;
+            groupDiv.appendChild(nDiv);
+        });
+        const sDiv=document.createElement('div');
+        sDiv.className='number special';
+        sDiv.textContent=special;
+        groupDiv.appendChild(sDiv);
+        resultsDiv.appendChild(groupDiv);
     }
-
-    let special = available[Math.floor(Math.random()*available.length)];
-
-    const groupDiv=document.createElement('div');
-    mainNumbers.sort((a,b)=>a-b).forEach(n=>{
-      const nDiv=document.createElement('div');
-      nDiv.className='number';
-      nDiv.textContent=n;
-      groupDiv.appendChild(nDiv);
-    });
-    const sDiv=document.createElement('div');
-    sDiv.className='number special';
-    sDiv.textContent=special;
-    groupDiv.appendChild(sDiv);
-    resultsDiv.appendChild(groupDiv);
-  }
 }
 </script>
+
 </body>
 </html>
