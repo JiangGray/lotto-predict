@@ -1,115 +1,140 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大樂透預測網站</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: url('cat-background.jpg') no-repeat center center fixed;
-            background-size: cover;
-            overflow: hidden; /* 🚫 禁止出現捲軸 */
-        }
+  <meta charset="UTF-8">
+  <title>大樂透預測網站</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('cat-background.jpg') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        .container {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
+    /* 左側按鈕區 */
+    .sidebar {
+      width: 200px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-        .sidebar {
-            width: 250px;
-            background: rgba(255, 255, 255, 0.85);
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
+    .sidebar button {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ff9800;
+      color: white;
+      transition: background 0.3s;
+    }
 
-        .content {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.6);
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto; /* ✅ 僅允許右側垂直滾動 */
-        }
+    .sidebar button:hover {
+      background: #e68900;
+    }
 
-        button {
-            width: 100%;
-            margin: 5px 0;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: #4CAF50;
-            color: white;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    /* 右側內容區 */
+    .content {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
 
-        button:hover {
-            background: #45a049;
-        }
+    h2 {
+      margin-top: 0;
+    }
 
-        .result {
-            font-size: 18px;
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            background: #fff;
-        }
-    </style>
+    .lotto-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .lotto-table th, .lotto-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .lotto-table th {
+      background: #f57c00;
+      color: white;
+      position: sticky;
+      top: 0;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 左側功能區 -->
-        <div class="sidebar">
-            <h2>功能選單</h2>
-            <button onclick="predictLotto()">預測號碼</button>
-            <button onclick="showHistory()">顯示歷史資料</button>
-        </div>
+  <!-- 左側 -->
+  <div class="sidebar">
+    <button onclick="predict()">隨機預測</button>
+    <button onclick="loadHistory()">顯示歷史資料</button>
+  </div>
 
-        <!-- 右側顯示區 -->
-        <div class="content">
-            <h2>結果顯示</h2>
-            <div id="output" class="result">請選擇功能</div>
-        </div>
-    </div>
+  <!-- 右側 -->
+  <div class="content" id="content">
+    <h2>歡迎來到大樂透預測網站</h2>
+    <p>請選擇左邊的功能。</p>
+  </div>
 
-    <script>
-        async function predictLotto() {
-            let numbers = [];
-            while (numbers.length < 6) {
-                let n = Math.floor(Math.random() * 49) + 1;
-                if (!numbers.includes(n)) numbers.push(n);
-            }
-            numbers.sort((a, b) => a - b);
-            document.getElementById("output").innerHTML = 
-                "<b>預測號碼：</b> " + numbers.join(", ");
-        }
+  <script>
+    // 隨機預測 6 個號碼
+    function predict() {
+      let numbers = [];
+      while (numbers.length < 6) {
+        let num = Math.floor(Math.random() * 49) + 1;
+        if (!numbers.includes(num)) numbers.push(num);
+      }
+      numbers.sort((a, b) => a - b);
 
-        async function showHistory() {
-            try {
-                const response = await fetch("lottoData.json"); // 📂 請確認 JSON 檔有放在同一資料夾
-                const data = await response.json();
+      document.getElementById("content").innerHTML = `
+        <h2>隨機預測號碼</h2>
+        <p>${numbers.join(", ")}</p>
+      `;
+    }
 
-                let html = "<h3>近 50 期歷史開獎號碼</h3>";
-                html += "<ul>";
-                data.forEach(d => {
-                    html += `<li><b>${d.date}</b> ➝ ${d.numbers.join(", ")}</li>`;
-                });
-                html += "</ul>";
-
-                document.getElementById("output").innerHTML = html;
-            } catch (e) {
-                document.getElementById("output").innerHTML = "⚠ 無法載入歷史資料";
-                console.error(e);
-            }
-        }
-    </script>
+    // 載入歷史資料
+    function loadHistory() {
+      fetch("lottoData.json")
+        .then(response => {
+          if (!response.ok) throw new Error("HTTP 錯誤: " + response.status);
+          return response.json();
+        })
+        .then(data => {
+          let html = `
+            <h2>最近 ${data.length} 期歷史開獎號碼</h2>
+            <table class="lotto-table">
+              <tr><th>期別</th><th>日期</th><th>開獎號碼</th></tr>
+          `;
+          data.forEach(item => {
+            html += `
+              <tr>
+                <td>${item.issue}</td>
+                <td>${item.date}</td>
+                <td>${item.numbers.join(", ")}</td>
+              </tr>
+            `;
+          });
+          html += `</table>`;
+          document.getElementById("content").innerHTML = html;
+        })
+        .catch(error => {
+          document.getElementById("content").innerHTML = `
+            <h2>讀取失敗</h2>
+            <p style="color:red;">${error}</p>
+          `;
+          console.error("載入失敗:", error);
+        });
+    }
+  </script>
 </body>
 </html>
